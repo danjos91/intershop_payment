@@ -36,3 +36,5 @@ logging:
   level:
     io.r2dbc: DEBUG
     org.springframework.r2dbc: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG

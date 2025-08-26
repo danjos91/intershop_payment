@@ -35,4 +35,8 @@ public class UserService {
     public boolean matchesPassword(String rawPassword, String encodedPassword) {
         return passwordEncoder.matches(rawPassword, encodedPassword);
     }
+    
+    public PasswordEncoder getPasswordEncoder() {
+        return passwordEncoder;
+    }
 }

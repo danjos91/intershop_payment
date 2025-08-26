@@ -3,6 +3,7 @@ package io.github.danjos.intershop.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 import lombok.Data;
+import java.time.LocalDateTime;
 
 @Table("users")
 @Data
@@ -12,4 +13,5 @@ public class User {
     private String username;
     private String password;
     private String email;
+    private LocalDateTime createdAt;
 }
