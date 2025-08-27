@@ -19,10 +19,11 @@ public class AuthController {
         return "login";
     }
     
-    @GetMapping("/logout")
-    public String logout() {
-        return "redirect:/";
-    }
+    // Remove custom logout - let Spring Security handle it
+    // @GetMapping("/logout")
+    // public String logout() {
+    //     return "redirect:/";
+    // }
 
     @GetMapping("/debug/users")
     @ResponseBody

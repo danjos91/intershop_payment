@@ -20,6 +20,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.springframework.security.core.Authentication;
 
 @Controller
 @RequiredArgsConstructor
@@ -35,7 +36,8 @@ public class WebController {
             @RequestParam(name = "search", required = false, defaultValue = "") String search,
             @RequestParam(name = "pageSize", required = false, defaultValue = "10") int pageSize,
             @RequestParam(name = "pageNumber", required = false, defaultValue = "1") int pageNumber,
-            WebSession session) {
+            WebSession session,
+            Authentication authentication) {
 
         return Mono.zip(
                 itemService.searchItems(search, pageNumber, pageSize, sort),
@@ -55,6 +57,7 @@ public class WebController {
                         .modelAttribute("items", itemsWithCount)
                         .modelAttribute("search", search)
                         .modelAttribute("paging", paging)
+                        .modelAttribute("isLoggedIn", authentication != null && !"anonymousUser".equals(authentication.getName()))
                         .build();
             })
             .onErrorResume(e -> {

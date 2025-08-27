@@ -14,10 +14,15 @@
             </button>
         </a>
         <a href="/cart/items" style="text-decoration:none;">
-            <button style="background-color:#2196F3;color:white;padding:10px 20px;border:none;border-radius:5px;cursor:pointer;font-size:16px;">
+            <button style="background-color:#2196F3;color:white;padding:10px 20px;margin-right:10px;border:none;border-radius:5px;cursor:pointer;font-size:16px;">
                 &#128722; КОРЗИНА
             </button>
         </a>
+        <form th:if="${isLoggedIn}" action="/logout" method="post" style="display: inline;">
+            <button type="submit" style="background-color:#f44336;color:white;padding:10px 20px;border:none;border-radius:5px;cursor:pointer;font-size:16px;">
+                &#128682; ВЫХОД
+            </button>
+        </form>
     </div>
     <table style="width:70%;margin-left:auto;margin-right:auto;">
         <tr>
