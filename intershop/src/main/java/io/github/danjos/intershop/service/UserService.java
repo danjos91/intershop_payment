@@ -32,6 +32,11 @@ public class UserService {
         return userRepository.findByUsername(username);
     }
     
+    public Mono<Long> getUserIdByUsername(String username) {
+        return userRepository.findByUsername(username)
+            .map(User::getId);
+    }
+    
     public boolean matchesPassword(String rawPassword, String encodedPassword) {
         return passwordEncoder.matches(rawPassword, encodedPassword);
     }
