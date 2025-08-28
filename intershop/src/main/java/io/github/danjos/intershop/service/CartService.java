@@ -17,7 +17,7 @@ public class CartService {
     private final PaymentClientService paymentClientService;
     private final CartItemRepository cartItemRepository;
 
-    // Методы для работы с корзиной пользователя (новые)
+    // Методы для работы с корзиной пользователя в БД
     public Mono<Void> addItemToCart(Long itemId, Long userId) {
         return cartItemRepository.findByUserIdAndItemId(userId, itemId)
             .switchIfEmpty(Mono.defer(() -> {
@@ -53,30 +53,6 @@ public class CartService {
 
     public Mono<List<CartItemDto>> getCartItemsReactive(Long userId) {
         return cartItemRepository.findByUserId(userId)
-                return Mono.fromRunnable(() -> {
-                    Map<Long, Integer> cart = getCart(session);
-                    cart.remove(itemId);
-                    session.getAttributes().put("cart", cart);
-                });
-            }
-        
-            public Map<Long, Integer> getCart(WebSession session) {
-                Object cartAttribute = session.getAttributes().get("cart");
-                Map<Long, Integer> cart;
-                if (cartAttribute instanceof Map) {
-                    cart = (Map<Long, Integer>) cartAttribute;
-                } else {
-                    cart = new HashMap<>();
-                    session.getAttributes().put("cart", cart);
-                }
-                return cart;
-            }
-        
-            public Mono<List<CartItemDto>> getCartItemsReactive(WebSession session) {
-                Map<Long, Integer> cart = getCart(session);
-        
-                Set<Long> ids =  cart.isEmpty() ? new HashSet<>() : cart.keySet();
-                
             .collectList()
             .flatMap(cartItems -> {
                 if (cartItems.isEmpty()) {
@@ -121,41 +97,8 @@ public class CartService {
             .onErrorReturn(false);
     }
 
-    // Методы для работы с сессией (оставляем для обратной совместимости)
-    public void addItemToCart(Long itemId, org.springframework.web.server.WebSession session) {
-        // Этот метод оставляем для обратной совместимости, но он больше не используется
-        throw new UnsupportedOperationException("Use addItemToCart(Long itemId, Long userId) instead");
-    }
-
-    public void removeItemFromCart(Long itemId, org.springframework.web.server.WebSession session) {
-        throw new UnsupportedOperationException("Use removeItemFromCart(Long itemId, Long userId) instead");
-    }
-
-    public Mono<Void> addItemToCartReactive(Long itemId, org.springframework.web.server.WebSession session) {
-        throw new UnsupportedOperationException("Use addItemToCart(Long itemId, Long userId) instead");
-    }
-
-    public Mono<Void> removeItemFromCartReactive(Long itemId, org.springframework.web.server.WebSession session) {
-        throw new UnsupportedOperationException("Use removeItemFromCart(Long itemId, Long userId) instead");
-    }
-
-    public Mono<Void> deleteItemFromCartReactive(Long itemId, org.springframework.web.server.WebSession session) {
-        throw new UnsupportedOperationException("Use deleteItemFromCart(Long itemId, Long userId) instead");
-    }
-
-    public Map<Long, Integer> getCart(org.springframework.web.server.WebSession session) {
-        throw new UnsupportedOperationException("Use getCartItemsReactive(Long userId) instead");
-    }
-
-    public Mono<List<CartItemDto>> getCartItemsReactive(org.springframework.web.server.WebSession session) {
-        throw new UnsupportedOperationException("Use getCartItemsReactive(Long userId) instead");
-    }
-
-    public Mono<Double> getCartTotalReactive(org.springframework.web.server.WebSession session) {
-        throw new UnsupportedOperationException("Use getCartTotalReactive(Long userId) instead");
-    }
-    
-    public Mono<Boolean> isCheckoutEnabled(org.springframework.web.server.WebSession session) {
-        throw new UnsupportedOperationException("Use isCheckoutEnabled(Long userId) instead");
+    // Методы для очистки корзины пользователя (например, после создания заказа)
+    public Mono<Void> clearUserCart(Long userId) {
+        return cartItemRepository.deleteByUserId(userId);
     }
 }
