@@ -14,11 +14,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.reactive.result.view.Rendering;
-import org.springframework.web.server.WebSession;
+
 import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import org.springframework.security.core.Authentication;
 
 @Controller
 @RequiredArgsConstructor
@@ -30,14 +32,20 @@ public class WebCartController {
     private final PaymentClientService paymentClientService;
 
     @GetMapping("/cart/items")
-    public Mono<Rendering> showCart(WebSession session) {
-        return Mono.zip(
-                cartService.getCartItemsReactive(session),
-                cartService.getCartTotalReactive(session),
-                cartService.isCheckoutEnabled(session),
-                userService.getCurrentUser(),
+    public Mono<Rendering> showCart(Authentication authentication) {
+        // Проверяем, что пользователь авторизован
+        if (authentication == null || "anonymousUser".equals(authentication.getName())) {
+            return Mono.just(Rendering.redirectTo("/login").build());
+        }
+        
+        return userService.getUserIdByUsername(authentication.getName())
+            .flatMap(userId -> Mono.zip(
+                cartService.getCartItemsReactive(userId),
+                cartService.getCartTotalReactive(userId),
+                cartService.isCheckoutEnabled(userId),
+                userService.findByUsername(authentication.getName()),
                 paymentClientService.getBalance()
-            )
+            ))
             .map(tuple -> {
                 List<CartItemDto> items = tuple.getT1();
                 Double total = tuple.getT2();
@@ -64,21 +72,29 @@ public class WebCartController {
     public Mono<Rendering> handleCartAction(
             @PathVariable Long id, 
             @RequestParam String action, 
-            WebSession session) {
+            Authentication authentication) {
         
         log.info("Handling cart action: {} for item: {}", action, id);
         
-        Mono<Void> cartOperation = Mono.empty();
-        
-        if ("plus".equals(action)) {
-            cartOperation = cartService.addItemToCartReactive(id, session);
-        } else if ("minus".equals(action)) {
-            cartOperation = cartService.removeItemFromCartReactive(id, session);
-        } else if ("delete".equals(action)) {
-            cartOperation = cartService.deleteItemFromCartReactive(id, session);
+        // Проверяем, что пользователь авторизован
+        if (authentication == null || "anonymousUser".equals(authentication.getName())) {
+            return Mono.just(Rendering.redirectTo("/login").build());
         }
         
-        return cartOperation
+        return userService.getUserIdByUsername(authentication.getName())
+            .flatMap(userId -> {
+                Mono<Void> cartOperation = Mono.empty();
+                
+                if ("plus".equals(action)) {
+                    cartOperation = cartService.addItemToCart(id, userId);
+                } else if ("minus".equals(action)) {
+                    cartOperation = cartService.removeItemFromCart(id, userId);
+                } else if ("delete".equals(action)) {
+                    cartOperation = cartService.deleteItemFromCart(id, userId);
+                }
+                
+                return cartOperation;
+            })
             .then(Mono.just(Rendering.redirectTo("/cart/items").build()))
             .onErrorResume(e -> {
                 log.error("Error in handleCartAction", e);
@@ -87,40 +103,40 @@ public class WebCartController {
     }
 
     @PostMapping("/buy")
-    public Mono<Rendering> createOrder(WebSession session) {
+    public Mono<Rendering> createOrder(Authentication authentication) {
         log.info("Creating order from cart");
         
-        return Mono.zip(
-                Mono.just(cartService.getCart(session)),
-                cartService.getCartTotalReactive(session),
-                userService.getCurrentUser()
-            )
-            .flatMap(tuple -> {
-                Map<Long, Integer> cart = tuple.getT1();
-                Double total = tuple.getT2();
-                User user = tuple.getT3();
-                
-                log.info("Cart items: {}, Total: {}, User: {}", cart, total, user.getUsername());
-                
-                return paymentClientService.processPayment(total, "order-" + System.currentTimeMillis())
-                    .flatMap(paymentSuccess -> {
-                        if (paymentSuccess) {
-                            log.info("Payment successful, creating order");
-                            return orderService.createOrderFromCart(cart, user)
-                                .map(order -> {
-                                    session.getAttributes().remove("cart");
-                                    log.info("Order created successfully: {}", order.getId());
-                                    return Rendering.redirectTo("/orders/" + order.getId() + "?newOrder=true").build();
-                                });
-                        } else {
-                            log.warn("Payment failed, redirecting to cart");
-                            return Mono.just(Rendering.redirectTo("/cart/items?paymentFailed=true").build());
+        // Проверяем, что пользователь авторизован
+        if (authentication == null || "anonymousUser".equals(authentication.getName())) {
+            return Mono.just(Rendering.redirectTo("/login").build());
+        }
+        
+        return userService.findByUsername(authentication.getName())
+            .flatMap(user -> {
+                return userService.getUserIdByUsername(authentication.getName())
+                    .flatMap(userId -> Mono.zip(
+                        cartService.getCartItemsReactive(userId),
+                        cartService.getCartTotalReactive(userId)
+                    ))
+                    .flatMap(tuple -> {
+                        List<CartItemDto> cartItems = tuple.getT1();
+                        Double total = tuple.getT2();
+                        
+                        if (cartItems.isEmpty()) {
+                            return Mono.just(Rendering.redirectTo("/cart/items").build());
                         }
+                        
+                        // Конвертируем CartItemDto в Map для OrderService
+                        Map<Long, Integer> cartMap = cartItems.stream()
+                            .collect(Collectors.toMap(item -> item.getId(), CartItemDto::getCount));
+                        
+                        return orderService.createOrderFromCart(cartMap, user)
+                            .then(Mono.just(Rendering.redirectTo("/orders").build()));
                     });
             })
             .onErrorResume(e -> {
                 log.error("Error in createOrder", e);
-                return Mono.just(Rendering.redirectTo("/cart/items?error=true").build());
+                return Mono.just(Rendering.redirectTo("/error").build());
             });
     }
 } 
