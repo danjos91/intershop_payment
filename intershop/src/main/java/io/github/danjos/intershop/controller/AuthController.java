@@ -2,8 +2,13 @@ package io.github.danjos.intershop.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.reactive.result.view.Rendering;
+import org.springframework.validation.annotation.Validated;
 import io.github.danjos.intershop.service.UserService;
+import io.github.danjos.intershop.dto.UserRegistrationDto;
+import reactor.core.publisher.Mono;
 
 @Controller
 public class AuthController {
@@ -17,6 +22,18 @@ public class AuthController {
     @GetMapping("/login")
     public String login() {
         return "login";
+    }
+    
+    @GetMapping("/register")
+    public String register() {
+        return "register";
+    }
+    
+    @PostMapping("/register")
+    public Mono<Rendering> registerUser(@Validated UserRegistrationDto userDto) {
+        return userService.createUser(userDto.getUsername(), userDto.getPassword(), userDto.getEmail())
+            .map(user -> Rendering.redirectTo("/login?registered=true").build())
+            .onErrorReturn(Rendering.redirectTo("/register?error=true").build());
     }
     
     // Remove custom logout - let Spring Security handle it

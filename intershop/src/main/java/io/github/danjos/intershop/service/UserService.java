@@ -28,6 +28,14 @@ public class UserService {
         return userRepository.save(user);
     }
     
+    public Mono<User> createUser(String username, String password, String email) {
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setEmail(email);
+        return userRepository.save(user);
+    }
+    
     public Mono<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
     }
