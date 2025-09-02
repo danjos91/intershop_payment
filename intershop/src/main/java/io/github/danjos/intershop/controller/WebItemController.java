@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import reactor.core.publisher.Mono;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -66,6 +67,7 @@ public class WebItemController {
     }
 
     @GetMapping("/order/{id}")
+    @PreAuthorize("isAuthenticated()")
     public Mono<Rendering> handleItemAction(
             @PathVariable Long id,
             @RequestParam String action,

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.reactive.result.view.Rendering;
 import reactor.core.publisher.Mono;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @Controller
 @RequiredArgsConstructor
@@ -17,6 +18,7 @@ public class WebOrderController {
     private final UserService userService;
 
     @GetMapping("/orders")
+    @PreAuthorize("isAuthenticated()")
     public Mono<Rendering> showOrders() {
         return userService.getCurrentUser()
             .flatMap(user -> 
@@ -31,6 +33,7 @@ public class WebOrderController {
     }
 
     @GetMapping("/orders/{id}")
+    @PreAuthorize("isAuthenticated()")
     public Mono<Rendering> showOrder(
             @PathVariable Long id, 
             @RequestParam(required = false) boolean newOrder) {
