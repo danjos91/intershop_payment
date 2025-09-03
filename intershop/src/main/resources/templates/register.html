@@ -91,12 +91,12 @@
     <div class="container">
         <h1>Регистрация</h1>
         
-        <div th:if="${param.registered}" class="success">
-            Регистрация прошла успешно! Теперь вы можете войти в систему.
+        <div th:if="${param.registered != null}" class="success">
+            Registration successful! You can now log in.
         </div>
         
-        <div th:if="${param.error}" class="error">
-            Ошибка при регистрации. Попробуйте еще раз.
+        <div th:if="${param.error != null}" class="error">
+            Registration error. Please try again.
         </div>
         
         <form th:action="@{/register}" method="post">
