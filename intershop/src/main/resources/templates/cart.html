@@ -57,22 +57,22 @@
         </tr>
         <tr>
             <td style="text-align:right">
-                <div th:if="${param.paymentFailed}" style="color: red; margin-bottom: 10px;">
-                    ❌ Платеж не прошел. Недостаточно средств на счете.
+                <div th:if="${param.paymentFailed != null}" style="color: red; margin-bottom: 10px;">
+                    ❌ Payment failed. Insufficient funds.
                 </div>
-                <div th:if="${param.error}" style="color: red; margin-bottom: 10px;">
-                    ❌ Произошла ошибка при создании заказа.
+                <div th:if="${param.error != null}" style="color: red; margin-bottom: 10px;">
+                    ❌ Error creating order.
                 </div>
                 <form action="/buy" method="post" th:if="${!empty}">
                     <button th:disabled="${!checkoutEnabled}" 
                             th:style="${!checkoutEnabled} ? 'background-color: #ccc; cursor: not-allowed;' : 'background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;'">
-                        <span th:if="${checkoutEnabled}">Купить</span>
-                        <span th:unless="${checkoutEnabled}">Недостаточно средств</span>
+                        <span th:if="${checkoutEnabled}">Buy</span>
+                        <span th:unless="${checkoutEnabled}">Insufficient funds</span>
                     </button>
                 </form>
                 <div th:if="${!checkoutEnabled and !empty}" style="color: orange; margin-top: 10px; font-size: 14px;">
-                    💡 Для оформления заказа необходимо пополнить счет на 
-                    <span th:text="${total - balance}"></span> руб.
+                    💡 To place an order, you need to top up your account by 
+                    <span th:text="${total - balance}"></span> rub.
                 </div>
             </td>
         </tr>
