@@ -6,6 +6,7 @@ import io.github.danjos.payment.domain.PaymentResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -30,6 +31,7 @@ public class PaymentController {
     }
 
     @GetMapping("/balance")
+    @PreAuthorize("hasAuthority('SCOPE_payment:read')")
     public Mono<ResponseEntity<BalanceResponse>> getBalance() {
         log.info("Getting balance: {}", currentBalance);
         
@@ -42,6 +44,7 @@ public class PaymentController {
     }
 
     @PostMapping("/process")
+    @PreAuthorize("hasAuthority('SCOPE_payment:write')")
     public Mono<ResponseEntity<PaymentResponse>> processPayment(@RequestBody PaymentRequest request) {
         log.info("Processing payment: amount={}, orderId={}", request.getAmount(), request.getOrderId());
         
