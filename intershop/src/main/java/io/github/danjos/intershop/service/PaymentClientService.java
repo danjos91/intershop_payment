@@ -1,8 +1,10 @@
 package io.github.danjos.intershop.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.security.oauth2.client.web.reactive.function.client.ServerOAuth2AuthorizedClientExchangeFilterFunction;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,16 +18,12 @@ import java.util.Map;
 public class PaymentClientService {
     
     private final WebClient webClient;
-    
-    public PaymentClientService() {
-        this.webClient = WebClient.builder()
-                .baseUrl("http://localhost:8081")
-                .build();
-    }
+    private final ServerOAuth2AuthorizedClientExchangeFilterFunction oauth2ClientFilter;
     
     public Mono<Double> getBalance() {
         return webClient.get()
                 .uri("/api/payment/balance")
+                .attributes(oauth2ClientFilter.createDefault())
                 .retrieve()
                 .bodyToMono(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {})
                 .map(response -> {
@@ -54,6 +52,7 @@ public class PaymentClientService {
         
         return webClient.post()
                 .uri("/api/payment/process")
+                .attributes(oauth2ClientFilter.createDefault())
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {})

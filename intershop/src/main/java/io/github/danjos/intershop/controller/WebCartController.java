@@ -5,7 +5,7 @@ import io.github.danjos.intershop.model.User;
 import io.github.danjos.intershop.service.CartService;
 import io.github.danjos.intershop.service.OrderService;
 import io.github.danjos.intershop.service.UserService;
-import io.github.danjos.intershop.service.PaymentService;
+import io.github.danjos.intershop.service.PaymentClientService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -31,7 +31,7 @@ public class WebCartController {
     private final CartService cartService;
     private final OrderService orderService;
     private final UserService userService;
-    private final PaymentService paymentService;
+    private final PaymentClientService paymentClientService;
 
     @GetMapping("/cart/items")
     @PreAuthorize("isAuthenticated()")
@@ -47,36 +47,33 @@ public class WebCartController {
                 cartService.getCartTotalReactive(userId),
                 cartService.isCheckoutEnabled(userId),
                 userService.findByUsername(authentication.getName()),
-                paymentService.getBalance()
+                paymentClientService.getBalance()
             ))
             .map(tuple -> {
                 List<CartItemDto> items = tuple.getT1();
                 Double total = tuple.getT2();
                 Boolean checkoutEnabled = tuple.getT3();
                 User user = tuple.getT4();
-                Map<String, Object> balanceResponse = tuple.getT5();
+                Double balance = tuple.getT5();
                 
-                // Извлекаем баланс из ответа или используем 0.0 по умолчанию
-                Double balance = 0.0;
-                if (balanceResponse != null && balanceResponse.containsKey("balance")) {
-                    Object balanceObj = balanceResponse.get("balance");
-                    if (balanceObj instanceof Number) {
-                        balance = ((Number) balanceObj).doubleValue();
-                    }
-                }
+                // Verificar si hay suficiente saldo para el checkout
+                Boolean canCheckout = checkoutEnabled && balance >= total;
                 
                 return Rendering.view("cart")
                         .modelAttribute("items", items)
                         .modelAttribute("total", total)
                         .modelAttribute("empty", items.isEmpty())
-                        .modelAttribute("checkoutEnabled", checkoutEnabled)
+                        .modelAttribute("checkoutEnabled", canCheckout)
                         .modelAttribute("user", user)
                         .modelAttribute("balance", balance)
+                        .modelAttribute("insufficientFunds", !canCheckout && !items.isEmpty())
                         .build();
             })
             .onErrorResume(e -> {
                 log.error("Error in showCart", e);
-                return Mono.just(Rendering.redirectTo("/error").build());
+                return Mono.just(Rendering.redirectTo("/error?message=" + 
+                    java.net.URLEncoder.encode("Error loading cart: " + e.getMessage(), 
+                    java.nio.charset.StandardCharsets.UTF_8)).build());
             });
     }
 
@@ -144,28 +141,29 @@ public class WebCartController {
                         Map<Long, Integer> cartMap = cartItems.stream()
                             .collect(Collectors.toMap(item -> item.getId(), CartItemDto::getCount));
                         
-                        // Сначала обрабатываем платеж через OAuth2
-                        return paymentService.processPayment(BigDecimal.valueOf(total))
-                            .flatMap(paymentResult -> {
-                                if ("success".equals(paymentResult.get("status"))) {
-                                    // Платеж успешен, создаем заказ
-                                    return orderService.createOrderFromCart(cartMap, user)
-                                        .then(cartService.clearUserCart(user.getId()))
-                                        .then(Mono.just(Rendering.redirectTo("/orders?success=true").build()));
-                                } else {
-                                    // Платеж не прошел
-                                    return Mono.just(Rendering.redirectTo("/cart/items?paymentFailed=true").build());
-                                }
-                            })
-                            .onErrorResume(e -> {
-                                log.error("Payment processing failed", e);
-                                return Mono.just(Rendering.redirectTo("/cart/items?paymentFailed=true").build());
+                        // Созamos el pedido primero
+                        return orderService.createOrderFromCart(cartMap, user)
+                            .flatMap(order -> {
+                                // Procesamos el pago
+                                return orderService.processOrderPayment(order)
+                                    .flatMap(paymentSuccess -> {
+                                        if (paymentSuccess) {
+                                            // Pago exitoso, limpiamos el carrito
+                                            return cartService.clearUserCart(user.getId())
+                                                .then(Mono.just(Rendering.redirectTo("/orders?success=true").build()));
+                                        } else {
+                                            // Pago falló
+                                            return Mono.just(Rendering.redirectTo("/cart/items?paymentFailed=true").build());
+                                        }
+                                    });
                             });
                     });
             })
             .onErrorResume(e -> {
                 log.error("Error in createOrder", e);
-                return Mono.just(Rendering.redirectTo("/error").build());
+                String errorMessage = "Error creating order: " + e.getMessage();
+                return Mono.just(Rendering.redirectTo("/cart/items?paymentFailed=true&error=" + 
+                    java.net.URLEncoder.encode(errorMessage, java.nio.charset.StandardCharsets.UTF_8)).build());
             });
     }
 } 
