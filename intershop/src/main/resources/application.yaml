@@ -25,19 +25,6 @@ spring:
       schema-locations: classpath:schema.sql
       data-locations: classpath:data.sql
 
-  security:
-    oauth2:
-      client:
-        registration:
-          keycloak:
-            client-id: intershop-client
-            client-secret: YVb78tiJaf3xAIbbEHdd4QTNcvgXzTmI
-            authorization-grant-type: client_credentials
-            scope: payment:read,payment:write
-        provider:
-          keycloak:
-            issuer-uri: http://localhost:8082/realms/intershop
-
 server:
   servlet:
     encoding:
