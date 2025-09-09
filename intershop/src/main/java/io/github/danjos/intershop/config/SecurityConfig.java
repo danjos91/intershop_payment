@@ -8,10 +8,6 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
-import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
-import org.springframework.security.oauth2.client.web.reactive.function.client.ServerOAuth2AuthorizedClientExchangeFilterFunction;
-import org.springframework.security.oauth2.client.web.server.ServerOAuth2AuthorizedClientRepository;
-import org.springframework.security.oauth2.client.web.server.WebSessionServerOAuth2AuthorizedClientRepository;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -32,8 +28,6 @@ public class SecurityConfig {
             .logout()
                 .logoutUrl("/logout")
             .and()
-            .oauth2Client()
-            .and()
             .csrf().disable()
             .build();
     }
@@ -41,17 +35,5 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    public ServerOAuth2AuthorizedClientRepository authorizedClientRepository() {
-        return new WebSessionServerOAuth2AuthorizedClientRepository();
-    }
-
-    @Bean
-    public ServerOAuth2AuthorizedClientExchangeFilterFunction oauth2ClientExchangeFilterFunction(
-            ReactiveClientRegistrationRepository clientRegistrations,
-            ServerOAuth2AuthorizedClientRepository authorizedClients) {
-        return new ServerOAuth2AuthorizedClientExchangeFilterFunction(clientRegistrations, authorizedClients);
     }
 }

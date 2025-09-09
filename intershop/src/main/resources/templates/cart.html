@@ -52,38 +52,27 @@
         </tr>
         <tr>
             <td style="text-align:right">
-                <div style="margin-bottom: 10px;">
-                    <b th:text="'Итого: '+${total}+' руб.'"></b>
-                </div>
-                <div style="margin-bottom: 10px; color: #666;">
-                    <span th:text="'Доступный баланс: '+${balance}+' руб.'"></span>
-                </div>
+                <b th:text="'Итого: '+${total}+' руб.'"></b>
             </td>
         </tr>
         <tr>
             <td style="text-align:right">
-                <div th:if="${param.paymentFailed != null}" style="color: red; margin-bottom: 10px; padding: 10px; background-color: #ffebee; border: 1px solid #f44336; border-radius: 4px;">
-                    ❌ Ошибка платежа. Недостаточно средств или сервис недоступен.
-                    <div th:if="${param.error != null}" style="margin-top: 5px; font-size: 12px; color: #666;">
-                        <strong>Детали:</strong> <span th:text="${param.error}"></span>
-                    </div>
+                <div th:if="${param.paymentFailed != null}" style="color: red; margin-bottom: 10px;">
+                    ❌ Payment failed. Insufficient funds.
                 </div>
-                <div th:if="${param.success != null}" style="color: green; margin-bottom: 10px; padding: 10px; background-color: #e8f5e8; border: 1px solid #4caf50; border-radius: 4px;">
-                    ✅ Заказ успешно оформлен!
-                </div>
-                <div th:if="${param.error != null}" style="color: red; margin-bottom: 10px; padding: 10px; background-color: #ffebee; border: 1px solid #f44336; border-radius: 4px;">
-                    ❌ Ошибка создания заказа.
+                <div th:if="${param.error != null}" style="color: red; margin-bottom: 10px;">
+                    ❌ Error creating order.
                 </div>
                 <form action="/buy" method="post" th:if="${!empty}">
                     <button th:disabled="${!checkoutEnabled}" 
                             th:style="${!checkoutEnabled} ? 'background-color: #ccc; cursor: not-allowed;' : 'background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;'">
-                        <span th:if="${checkoutEnabled}">💳 Купить</span>
-                        <span th:unless="${checkoutEnabled}">❌ Недостаточно средств</span>
+                        <span th:if="${checkoutEnabled}">Купить</span>
+                        <span th:unless="${checkoutEnabled}">Недостаточно средств</span>
                     </button>
                 </form>
-                <div th:if="${insufficientFunds}" style="color: orange; margin-top: 10px; padding: 10px; background-color: #fff3e0; border: 1px solid #ff9800; border-radius: 4px; font-size: 14px;">
+                <div th:if="${!checkoutEnabled and !empty}" style="color: orange; margin-top: 10px; font-size: 14px;">
                     💡 Для оформления заказа необходимо пополнить счет на 
-                    <b th:text="${total - balance}"></b> руб.
+                    <span th:text="${total - balance}"></span> руб.
                 </div>
             </td>
         </tr>

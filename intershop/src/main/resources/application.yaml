@@ -29,14 +29,14 @@ spring:
     oauth2:
       client:
         registration:
-          payment-service:
+          keycloak:
             client-id: intershop-client
             client-secret: YVb78tiJaf3xAIbbEHdd4QTNcvgXzTmI
             authorization-grant-type: client_credentials
             scope: payment:read,payment:write
         provider:
-          payment-service:
-            issuer-uri: http://localhost:8081/oauth2/jwks
+          keycloak:
+            issuer-uri: http://localhost:8082/realms/intershop
 
 server:
   servlet:
