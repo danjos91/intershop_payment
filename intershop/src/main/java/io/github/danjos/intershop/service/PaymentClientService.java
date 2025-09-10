@@ -1,5 +1,6 @@
 package io.github.danjos.intershop.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -15,19 +16,13 @@ import java.util.Map;
 @Slf4j
 public class PaymentClientService {
     
-    private final WebClient webClient;
+    private final OAuth2ClientService oauth2ClientService;
     
-    public PaymentClientService() {
-        this.webClient = WebClient.builder()
-                .baseUrl("http://localhost:8081")
-                .build();
-    }
+    @Value("${payment.service.url}")
+    private String paymentServiceUrl;
     
     public Mono<Double> getBalance() {
-        return webClient.get()
-                .uri("/api/payment/balance")
-                .retrieve()
-                .bodyToMono(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {})
+        return oauth2ClientService.executeWithToken("/api/payment/balance", Map.class)
                 .map(response -> {
                     Object balance = response.get("balance");
                     if (balance instanceof Number) {
@@ -52,11 +47,7 @@ public class PaymentClientService {
             "description", "Payment for order " + orderId
         );
         
-        return webClient.post()
-                .uri("/api/payment/process")
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {})
+        return oauth2ClientService.executePostWithToken("/api/payment/process", request, Map.class)
                 .map(response -> {
                     Object success = response.get("success");
                     return success instanceof Boolean && (Boolean) success;
