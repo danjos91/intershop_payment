@@ -30,19 +30,8 @@ This guide will help you set up Keycloak as the OAuth2 authorization server for 
 
 ## Step 3: Create the Intershop Realm
 
-### Option A: Automatic Setup (Recommended)
 
-Run the setup script:
-```bash
-# On Linux/Mac
-chmod +x setup-keycloak.sh
-./setup-keycloak.sh
-
-# On Windows
-setup-keycloak.bat
-```
-
-### Option B: Manual Setup
+### Manual Setup
 
 1. **Create Realm:**
    - Click "Create Realm" button
@@ -70,7 +59,7 @@ setup-keycloak.bat
    - Set Authorization: `OFF`
    - Set Service accounts roles: `ON`
    - Go to "Credentials" tab
-   - Copy the Secret: `cS02149Gddsnb4t0jl1KbeAyknrMfFYM`
+   - Copy the Secret: `payment-secret-123`
 
 4. **Create Test User:**
    - Go to "Users" → "Create new user"
@@ -100,67 +89,30 @@ setup-keycloak.bat
    - Protocol: `openid-connect`
    - Click "Save"
 
+3. **Add scopes to clients:**
+   - Go to "intershop-app" client → "Client scope" -> "Add client scope"
+   - Select `payment:read` and `payment:write`
+   - Go to "payment-service" client → "Client scope" -> "Add client scope"
+   - Select `payment:read` and `payment:write`
+
 ## Step 5: Test the Setup
 
-### Test 1: Check Keycloak is Running
-```bash
-curl http://localhost:8082/realms/intershop/.well-known/openid_configuration
-```
-
-### Test 2: Get Access Token (Client Credentials Flow)
+### Test 1: Get Access Token (Client Credentials Flow)
 ```bash
 curl -X POST http://localhost:8082/realms/intershop/protocol/openid-connect/token \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=client_credentials" \
   -d "client_id=payment-service" \
-  -d "client_secret=cS02149Gddsnb4t0jl1KbeAyknrMfFYM"
+  -d "client_secret=use actual secret here"
 ```
 
-### Test 3: Get Access Token (Password Flow)
+### Test 2: Get Access Token (Password Flow)
 ```bash
 curl -X POST http://localhost:8082/realms/intershop/protocol/openid-connect/token \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=password" \
   -d "client_id=intershop-app" \
-  -d "client_secret=jxwpCLO21XPJKcf5ahnsBinBIc7guEAJ" \
+  -d "client_secret=use actual secret here" \
   -d "username=testuser" \
   -d "password=testpass"
 ```
-
-## Important URLs
-
-- **Keycloak Admin Console:** http://localhost:8082/admin
-- **Realm:** `intershop`
-- **Authorization Endpoint:** http://localhost:8082/realms/intershop/protocol/openid-connect/auth
-- **Token Endpoint:** http://localhost:8082/realms/intershop/protocol/openid-connect/token
-- **JWKS Endpoint:** http://localhost:8082/realms/intershop/protocol/openid-connect/certs
-
-## Client Configuration Summary
-
-| Service | Client ID | Secret | Flow | Purpose |
-|---------|-----------|--------|------|---------|
-| Intershop App | `intershop-app` | `jxwpCLO21XPJKcf5ahnsBinBIc7guEAJ` | Authorization Code + Client Credentials | Web application authentication |
-| Payment Service | `cS02149Gddsnb4t0jl1KbeAyknrMfFYM` | Client Credentials | Resource server authentication |
-
-## Troubleshooting
-
-### Keycloak Won't Start
-- Check if port 8082 is available
-- Check Docker logs: `docker-compose logs keycloak`
-
-### Can't Access Admin Console
-- Wait a few minutes for Keycloak to fully initialize
-- Check if the container is running: `docker ps`
-
-### Token Requests Fail
-- Verify client credentials are correct
-- Check if the realm exists
-- Ensure the client is enabled
-
-## Next Steps
-
-Once Keycloak is set up and tested, you can:
-1. Configure the Intershop application to use OAuth2 client
-2. Configure the Payment service to validate JWT tokens
-3. Test the complete OAuth2 flow between services
-
