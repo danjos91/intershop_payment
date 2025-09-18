@@ -30,11 +30,12 @@ spring:
     oauth2:
       client:
         registration:
-          intershop-app:
+          keycloak:
             client-id: intershop-app
             client-secret: jxwpCLO21XPJKcf5ahnsBinBIc7guEAJ
-            authorization-grant-type: client_credentials
-            scope: payment:read,payment:write
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: openid,profile,email,payment:read,payment:write
             provider: keycloak
         provider:
           keycloak:

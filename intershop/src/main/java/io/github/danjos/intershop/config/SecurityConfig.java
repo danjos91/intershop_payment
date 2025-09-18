@@ -18,12 +18,14 @@ public class SecurityConfig {
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         return http
             .authorizeExchange()
-                .pathMatchers("/", "/items/**", "/images/**", "/css/**", "/js/**", "/login", "/register", "/debug/**", "/test/**").permitAll()
+                .pathMatchers("/", "/items/**", "/images/**", "/css/**", "/js/**", "/login", "/register", "/debug/**", "/test/**", "/oauth2/**").permitAll()
                 .pathMatchers("/cart/**", "/orders/**").authenticated()
                 .anyExchange().authenticated()
             .and()
             .formLogin()
                 .loginPage("/login")
+            .and()
+            .oauth2Login()
             .and()
             .logout()
                 .logoutUrl("/logout")

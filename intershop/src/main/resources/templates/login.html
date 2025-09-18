@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head>
+    <meta charset="UTF-8">
     <title>Login - Intershop</title>
     <style>
         body {
@@ -73,6 +74,21 @@
         .back-link a:hover {
             text-decoration: underline;
         }
+        .keycloak-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #1e88e5;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .keycloak-btn:hover {
+            background-color: #1565c0;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
@@ -92,6 +108,16 @@
             
             <button type="submit" class="login-btn">Login</button>
         </form>
+        
+        <div style="text-align: center; margin: 20px 0; color: #666;">
+            <span>OR</span>
+        </div>
+        
+        <div style="text-align: center;">
+            <a th:href="@{/oauth2/authorization/keycloak}" class="keycloak-btn">
+                🔐 Login with Keycloak
+            </a>
+        </div>
         
         <div class="back-link">
             <a href="/">Главная страница</a> | 

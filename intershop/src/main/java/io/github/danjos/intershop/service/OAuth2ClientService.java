@@ -20,9 +20,9 @@ public class OAuth2ClientService {
     
     public OAuth2ClientService(
             @Value("${spring.security.oauth2.client.provider.keycloak.issuer-uri}") String issuerUri,
-            @Value("${spring.security.oauth2.client.registration.intershop-app.client-id}") String clientId,
-            @Value("${spring.security.oauth2.client.registration.intershop-app.client-secret}") String clientSecret,
-            @Value("${spring.security.oauth2.client.registration.intershop-app.scope}") String scope) {
+            @Value("${spring.security.oauth2.client.registration.keycloak.client-id}") String clientId,
+            @Value("${spring.security.oauth2.client.registration.keycloak.client-secret}") String clientSecret,
+            @Value("${spring.security.oauth2.client.registration.keycloak.scope}") String scope) {
         
         this.webClient = WebClient.builder()
                 .baseUrl(issuerUri)
