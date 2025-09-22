@@ -32,7 +32,7 @@ spring:
         registration:
           keycloak:
             client-id: intershop-app
-            client-secret: jxwpCLO21XPJKcf5ahnsBinBIc7guEAJ
+            client-secret: ZUUzJLKb9627eocWUaJ4V3ORncPryQPk
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope: openid,profile,email,payment:read,payment:write
