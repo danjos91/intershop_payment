@@ -31,21 +31,21 @@ public class OrderService {
                 .flatMap(savedOrder -> {
                     return itemService.getItemByIds(itemIds)
                             .map(item -> {
-                                        OrderItem orderItem = new OrderItem();
-                                        orderItem.setOrderId(savedOrder.getId());
-                                        orderItem.setItemId(item.getId());
-                                        orderItem.setQuantity(cartItems.get(item.getId()));
-                                        orderItem.setPrice(item.getPrice());
-                                        orderItem.setOrder(savedOrder);
-                                        orderItem.setItem(item);
-                                        return orderItem;
-                                    })
-                                    .flatMap(orderItemRepository::save)
-                                    .collectList()
-                                    .map(savedOrderItems -> {
-                                        savedOrder.setItems(savedOrderItems);
-                                        return savedOrder;
-                                    });
+                                OrderItem orderItem = new OrderItem();
+                                orderItem.setOrderId(savedOrder.getId());
+                                orderItem.setItemId(item.getId());
+                                orderItem.setQuantity(cartItems.get(item.getId()));
+                                orderItem.setPrice(item.getPrice());
+                                orderItem.setOrder(savedOrder);
+                                orderItem.setItem(item);
+                                return orderItem;
+                            })
+                            .flatMap(orderItemRepository::save)
+                            .collectList()
+                            .map(savedOrderItems -> {
+                                savedOrder.setItems(savedOrderItems);
+                                return savedOrder;
+                            });
                 });
     }
 

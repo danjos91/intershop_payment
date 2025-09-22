@@ -3,6 +3,7 @@ package io.github.danjos.intershop.controller;
 import io.github.danjos.intershop.service.OrderService;
 import io.github.danjos.intershop.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,8 +20,13 @@ public class WebOrderController {
 
     @GetMapping("/orders")
     @PreAuthorize("isAuthenticated()")
-    public Mono<Rendering> showOrders() {
-        return userService.getCurrentUser()
+    public Mono<Rendering> showOrders(Authentication authentication) {
+        // Проверяем, что пользователь авторизован
+        if (authentication == null || "anonymousUser".equals(authentication.getName())) {
+            return Mono.just(Rendering.redirectTo("/login").build());
+        }
+        
+        return userService.findByUsername(authentication.getName())
             .flatMap(user -> 
                 orderService.getUserOrders(user)
                     .collectList()
@@ -29,7 +35,13 @@ public class WebOrderController {
                             .modelAttribute("orders", orders)
                             .build()
                     )
-            );
+            )
+            .onErrorResume(e -> {
+                // Log error and return empty orders
+                return Mono.just(Rendering.view("orders")
+                    .modelAttribute("orders", java.util.List.of())
+                    .build());
+            });
     }
 
     @GetMapping("/orders/{id}")

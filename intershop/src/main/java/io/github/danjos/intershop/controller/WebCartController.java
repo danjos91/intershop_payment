@@ -34,7 +34,9 @@ public class WebCartController {
 
     @GetMapping("/cart/items")
     @PreAuthorize("isAuthenticated()")
-    public Mono<Rendering> showCart(Authentication authentication) {
+    public Mono<Rendering> showCart(Authentication authentication, 
+                                   @RequestParam(required = false) String error,
+                                   @RequestParam(required = false) String success) {
         // Проверяем, что пользователь авторизован
         if (authentication == null || "anonymousUser".equals(authentication.getName())) {
             return Mono.just(Rendering.redirectTo("/login").build());
@@ -46,7 +48,7 @@ public class WebCartController {
                 cartService.getCartTotalReactive(userId),
                 cartService.isCheckoutEnabled(userId),
                 userService.findByUsername(authentication.getName()),
-                paymentClientService.getBalance()
+                paymentClientService.getBalanceForUser(authentication.getName())
             ))
             .map(tuple -> {
                 List<CartItemDto> items = tuple.getT1();
@@ -62,6 +64,8 @@ public class WebCartController {
                         .modelAttribute("checkoutEnabled", checkoutEnabled)
                         .modelAttribute("user", user)
                         .modelAttribute("balance", balance)
+                        .modelAttribute("error", error)
+                        .modelAttribute("success", success)
                         .build();
             })
             .onErrorResume(e -> {
@@ -134,8 +138,33 @@ public class WebCartController {
                         Map<Long, Integer> cartMap = cartItems.stream()
                             .collect(Collectors.toMap(item -> item.getId(), CartItemDto::getCount));
                         
-                        return orderService.createOrderFromCart(cartMap, user)
-                            .then(Mono.just(Rendering.redirectTo("/orders").build()));
+                        // Check if user has sufficient balance
+                        return paymentClientService.getBalanceForUser(authentication.getName())
+                            .flatMap(balance -> {
+                                if (balance < total) {
+                                    log.warn("Insufficient balance for user {}: required={}, available={}", 
+                                        authentication.getName(), total, balance);
+                                    return Mono.just(Rendering.redirectTo("/cart/items?error=insufficient_balance").build());
+                                }
+                                
+                                // Process payment first
+                                return paymentClientService.processPayment(total, "order-" + System.currentTimeMillis())
+                                    .flatMap(paymentSuccess -> {
+                                        if (!paymentSuccess) {
+                                            log.error("Payment failed for user {}", authentication.getName());
+                                            return Mono.just(Rendering.redirectTo("/cart/items?error=payment_failed").build());
+                                        }
+                                        
+                                        // Create order after successful payment
+                                        return orderService.createOrderFromCart(cartMap, user)
+                                            .flatMap(order -> {
+                                                // Clear the cart after successful order creation
+                                                return userService.getUserIdByUsername(authentication.getName())
+                                                    .flatMap(cartService::clearUserCart)
+                                                    .then(Mono.just(Rendering.redirectTo("/orders?success=true").build()));
+                                            });
+                                    });
+                            });
                     });
             })
             .onErrorResume(e -> {
