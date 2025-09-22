@@ -1,8 +1,8 @@
-INSERT INTO users (username, password, email, created_at) VALUES
-('currentUser', '$2a$10$7sKRup0OrLU0EHFj7dsTb.6nP01VmkRn9yzfRhRaJsxbZxAihEYqm', 'user@example.com', CURRENT_TIMESTAMP),
-('admin', '$2a$10$7sKRup0OrLU0EHFj7dsTb.6nP01VmkRn9yzfRhRaJsxbZxAihEYqm', 'admin@example.com', CURRENT_TIMESTAMP),
-('user1', '$2a$10$7sKRup0OrLU0EHFj7dsTb.6nP01VmkRn9yzfRhRaJsxbZxAihEYqm', 'user1@example.com', CURRENT_TIMESTAMP),
-('user2', '$2a$10$7sKRup0OrLU0EHFj7dsTb.6nP01VmkRn9yzfRhRaJsxbZxAihEYqm', 'user2@example.com', CURRENT_TIMESTAMP);
+INSERT INTO users (username, password, email, balance, created_at) VALUES
+('currentUser', '$2a$10$7sKRup0OrLU0EHFj7dsTb.6nP01VmkRn9yzfRhRaJsxbZxAihEYqm', 'user@example.com', 1000.00, CURRENT_TIMESTAMP),
+('admin', '$2a$10$7sKRup0OrLU0EHFj7dsTb.6nP01VmkRn9yzfRhRaJsxbZxAihEYqm', 'admin@example.com', 1000.00, CURRENT_TIMESTAMP),
+('user1', '$2a$10$7sKRup0OrLU0EHFj7dsTb.6nP01VmkRn9yzfRhRaJsxbZxAihEYqm', 'user1@example.com', 1000.00, CURRENT_TIMESTAMP),
+('user2', '$2a$10$7sKRup0OrLU0EHFj7dsTb.6nP01VmkRn9yzfRhRaJsxbZxAihEYqm', 'user2@example.com', 1000.00, CURRENT_TIMESTAMP);
 
 INSERT INTO items (title, description, price, img_path, stock, created_at) VALUES
 ('Laptop', 'High-performance laptop with latest specifications', 999.99, 'images/laptop.jpg', 10, CURRENT_TIMESTAMP),

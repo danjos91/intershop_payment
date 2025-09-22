@@ -52,4 +52,8 @@ public class UserService {
     public PasswordEncoder getPasswordEncoder() {
         return passwordEncoder;
     }
+    
+    public Mono<User> updateUser(User user) {
+        return userRepository.save(user);
+    }
 }

@@ -3,6 +3,7 @@ package io.github.danjos.intershop.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 import lombok.Data;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Table("users")
@@ -13,5 +14,6 @@ public class User {
     private String username;
     private String password;
     private String email;
+    private BigDecimal balance;
     private LocalDateTime createdAt;
 }
