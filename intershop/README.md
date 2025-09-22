@@ -30,6 +30,20 @@ This application is built using **reactive programming principles**:
 - **Scalable** - Designed to handle high concurrency with minimal resource usage
 - **Responsive** - Provides better performance under load
 
+## 🔐 OAuth2 Authentication
+
+This application implements **OAuth2 with Keycloak** for secure authentication and authorization:
+
+### Authentication Features
+- **OAuth2 Authorization Code Flow** - Industry-standard authentication protocol
+- **Keycloak Integration** - Enterprise-grade identity and access management
+- **JWT Token Management** - Secure token-based authentication
+- **Role-based Access Control** - Different permissions for users and admins
+- **Session Management** - Secure user session handling
+
+### Setup
+Refer to `KEYCLOAK_SETUP.md` for detailed Keycloak configuration and setup instructions.
+
 ## 🛍️ Core Features
 
 ### User Functionality
@@ -37,11 +51,13 @@ This application is built using **reactive programming principles**:
 - ✅ Shopping cart management
 - ✅ Order placement and history
 - ✅ User account system
+- ✅ OAuth2 authentication
 
 ### Admin Functionality
 - ⚙️ Product management (CRUD)
 - 📊 Order management
 - 👥 User management
+- 🔐 Role-based access control
 
 ## 🚀 Getting Started
 
@@ -110,7 +126,3 @@ Run the test suite:
 ```bash
   mvn test
 ```
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
