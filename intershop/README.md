@@ -5,6 +5,7 @@
 ![Spring WebFlux](https://img.shields.io/badge/Spring_WebFlux-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
 ![R2DBC](https://img.shields.io/badge/R2DBC-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
 ![H2 Database](https://img.shields.io/badge/H2-blue?style=for-the-badge)
+![OAuth2](https://img.shields.io/badge/OAuth2-4285F4?style=for-the-badge&logo=oauth&logoColor=white)
 
 ## 📚 Technology Stack
 
@@ -85,17 +86,45 @@ Refer to `KEYCLOAK_SETUP.md` for detailed Keycloak configuration and setup instr
 ```
 
 3. **Option B: Run Locally**
+
+**Prerequisites:**
+- Docker and Docker Compose installed
+- Java 21 JDK
+- Maven
+
+**Step 1: Start Keycloak and Redis**
 ```bash
-# Start redis
-  #docker run -d --name intershop-redis -p 6379:6379 redis:7-alpine
-  #need to run docker desktop if this is windows
+# Start Keycloak and Redis services
+  docker-compose up -d
+
+# Wait for Keycloak to be ready (optional check)
+  curl http://localhost:8082/realms/master
+```
+
+**Step 2: Configure Keycloak**
+1. Open http://localhost:8082/admin in your browser
+2. Login with admin/admin123
+3. Follow the detailed setup in `KEYCLOAK_SETUP.md` to:
+   - Create the `intershop` realm
+   - Configure clients and users
+   - Set up OAuth2 scopes
+
+**Step 3: Start Redis (if not using docker-compose)**
+```bash
+# Alternative: Start Redis separately
   docker run --name redis-server -it --rm -p 6379:6379 redis:7.4.2-bookworm sh -c "redis-server & sleep 7 && redis-cli"
+```
+
+**Step 4: Build and Run the Application**
+```bash
 # Build the executable JAR
   mvn clean package
 
 # Run the application
   mvn spring-boot:run
 ```
+
+**Note:** The application will be available at http://localhost:8080 and will redirect to Keycloak for authentication.
 
 ## 🌐 Access the Application
 
