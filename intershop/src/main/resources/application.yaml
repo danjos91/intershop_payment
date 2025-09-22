@@ -40,6 +40,12 @@ spring:
         provider:
           keycloak:
             issuer-uri: http://localhost:8082/realms/intershop
+  # Session Management
+  session:
+    store-type: redis  # Use Redis for session persistence
+    redis:
+      namespace: intershop:session
+      flush-mode: on_save
 
 # Payment Service Configuration
 payment:
@@ -52,6 +58,7 @@ server:
       charset: UTF-8
       enabled: true
       force: true
+  port: 8080
 
 logging:
   level:

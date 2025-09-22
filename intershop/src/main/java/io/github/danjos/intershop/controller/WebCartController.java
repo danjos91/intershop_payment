@@ -39,8 +39,12 @@ public class WebCartController {
                                    @RequestParam(required = false) String success) {
         // Проверяем, что пользователь авторизован
         if (authentication == null || "anonymousUser".equals(authentication.getName())) {
+            log.warn("Unauthenticated access attempt to cart for user: {}", 
+                authentication != null ? authentication.getName() : "null");
             return Mono.just(Rendering.redirectTo("/login").build());
         }
+        
+        log.info("Accessing cart for authenticated user: {}", authentication.getName());
         
         return userService.getUserIdByUsername(authentication.getName())
             .flatMap(userId -> Mono.zip(
@@ -81,10 +85,13 @@ public class WebCartController {
             @RequestParam String action, 
             Authentication authentication) {
         
-        log.info("Handling cart action: {} for item: {}", action, id);
+        log.info("Handling cart action: {} for item: {} by user: {}", action, id, 
+            authentication != null ? authentication.getName() : "null");
         
         // Проверяем, что пользователь авторизован
         if (authentication == null || "anonymousUser".equals(authentication.getName())) {
+            log.warn("Unauthenticated access attempt to cart action for user: {}", 
+                authentication != null ? authentication.getName() : "null");
             return Mono.just(Rendering.redirectTo("/login").build());
         }
         
@@ -112,10 +119,13 @@ public class WebCartController {
     @PostMapping("/buy")
     @PreAuthorize("isAuthenticated()")
     public Mono<Rendering> createOrder(Authentication authentication) {
-        log.info("Creating order from cart");
+        log.info("Creating order from cart for user: {}", 
+            authentication != null ? authentication.getName() : "null");
         
         // Проверяем, что пользователь авторизован
         if (authentication == null || "anonymousUser".equals(authentication.getName())) {
+            log.warn("Unauthenticated access attempt to create order for user: {}", 
+                authentication != null ? authentication.getName() : "null");
             return Mono.just(Rendering.redirectTo("/login").build());
         }
         
@@ -138,31 +148,21 @@ public class WebCartController {
                         Map<Long, Integer> cartMap = cartItems.stream()
                             .collect(Collectors.toMap(item -> item.getId(), CartItemDto::getCount));
                         
-                        // Check if user has sufficient balance
-                        return paymentClientService.getBalanceForUser(authentication.getName())
-                            .flatMap(balance -> {
-                                if (balance < total) {
-                                    log.warn("Insufficient balance for user {}: required={}, available={}", 
-                                        authentication.getName(), total, balance);
+                        // Process payment and create order
+                        return paymentClientService.processPaymentForUser(authentication.getName(), total, "order-" + System.currentTimeMillis())
+                            .flatMap(paymentSuccess -> {
+                                if (!paymentSuccess) {
+                                    log.error("Payment failed for user {}", authentication.getName());
                                     return Mono.just(Rendering.redirectTo("/cart/items?error=insufficient_balance").build());
                                 }
                                 
-                                // Process payment first
-                                return paymentClientService.processPayment(total, "order-" + System.currentTimeMillis())
-                                    .flatMap(paymentSuccess -> {
-                                        if (!paymentSuccess) {
-                                            log.error("Payment failed for user {}", authentication.getName());
-                                            return Mono.just(Rendering.redirectTo("/cart/items?error=payment_failed").build());
-                                        }
-                                        
-                                        // Create order after successful payment
-                                        return orderService.createOrderFromCart(cartMap, user)
-                                            .flatMap(order -> {
-                                                // Clear the cart after successful order creation
-                                                return userService.getUserIdByUsername(authentication.getName())
-                                                    .flatMap(cartService::clearUserCart)
-                                                    .then(Mono.just(Rendering.redirectTo("/orders?success=true").build()));
-                                            });
+                                // Create order after successful payment
+                                return orderService.createOrderFromCart(cartMap, user)
+                                    .flatMap(order -> {
+                                        // Clear the cart after successful order creation
+                                        return userService.getUserIdByUsername(authentication.getName())
+                                            .flatMap(cartService::clearUserCart)
+                                            .then(Mono.just(Rendering.redirectTo("/orders?success=true").build()));
                                     });
                             });
                     });

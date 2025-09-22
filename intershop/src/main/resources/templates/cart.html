@@ -57,10 +57,10 @@
         </tr>
         <tr>
             <td style="text-align:right">
-                <div th:if="${param.paymentFailed != null}" style="color: red; margin-bottom: 10px;">
+                <div th:if="${error != null and error == 'insufficient_balance'}" style="color: red; margin-bottom: 10px;">
                     ❌ Payment failed. Insufficient funds.
                 </div>
-                <div th:if="${param.error != null}" style="color: red; margin-bottom: 10px;">
+                <div th:if="${error != null and error != 'insufficient_balance'}" style="color: red; margin-bottom: 10px;">
                     ❌ Error creating order.
                 </div>
                 <form action="/buy" method="post" th:if="${!empty}">
