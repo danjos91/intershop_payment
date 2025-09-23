@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -63,8 +64,9 @@ class WebOrderControllerTest {
 
         @Test
         @DisplayName("Should return orders page with user orders")
+        @WithMockUser(username = "testuser")
         void showOrders_WithUserOrders_ShouldReturnOrdersPage() {
-            when(userService.getCurrentUser()).thenReturn(Mono.just(user));
+            when(userService.findByUsername("testuser")).thenReturn(Mono.just(user));
             when(orderService.getUserOrders(user)).thenReturn(Flux.fromIterable(orders));
 
             webTestClient.get()
@@ -80,8 +82,9 @@ class WebOrderControllerTest {
 
         @Test
         @DisplayName("Should return orders page with empty orders")
+        @WithMockUser(username = "testuser")
         void showOrders_WithEmptyOrders_ShouldReturnOrdersPage() {
-            when(userService.getCurrentUser()).thenReturn(Mono.just(user));
+            when(userService.findByUsername("testuser")).thenReturn(Mono.just(user));
             when(orderService.getUserOrders(user)).thenReturn(Flux.empty());
 
             webTestClient.get()
@@ -97,6 +100,7 @@ class WebOrderControllerTest {
 
         @Test
         @DisplayName("Should return order page with valid ID")
+        @WithMockUser(username = "testuser")
         void showOrder_WithValidId_ShouldReturnOrderPage() {
             when(orderService.getOrderById(1L)).thenReturn(Mono.just(order1));
 
@@ -113,6 +117,7 @@ class WebOrderControllerTest {
 
         @Test
         @DisplayName("Should return order page with new order parameter")
+        @WithMockUser(username = "testuser")
         void showOrder_WithNewOrderParameter_ShouldReturnOrderPage() {
             when(orderService.getOrderById(1L)).thenReturn(Mono.just(order1));
 

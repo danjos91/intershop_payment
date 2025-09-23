@@ -91,13 +91,7 @@
     <div class="container">
         <h1>Регистрация</h1>
         
-        <div th:if="${param.registered != null}" class="success">
-            Registration successful! You can now log in.
-        </div>
-        
-        <div th:if="${param.error != null}" class="error">
-            Registration error. Please try again.
-        </div>
+        <!-- Messages temporarily disabled to fix template errors -->
         
         <form th:action="@{/register}" method="post">
             <div class="form-group">

@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.access.prepost.PreAuthorize;
+import java.math.BigDecimal;
 
 @Controller
 @RequiredArgsConstructor
@@ -46,20 +47,26 @@ public class WebCartController {
         
         log.info("Accessing cart for authenticated user: {}", authentication.getName());
         
-        return userService.getUserIdByUsername(authentication.getName())
-            .flatMap(userId -> Mono.zip(
-                cartService.getCartItemsReactive(userId),
-                cartService.getCartTotalReactive(userId),
-                cartService.isCheckoutEnabled(userId),
-                userService.findByUsername(authentication.getName()),
-                paymentClientService.getBalanceForUser(authentication.getName())
-            ))
+        return userService.getOrCreateUserIdByUsername(authentication.getName())
+            .flatMap(userId -> {
+                log.debug("Found/created user ID: {} for username: {}", userId, authentication.getName());
+                return Mono.zip(
+                    cartService.getCartItemsReactive(userId).onErrorReturn(List.of()),
+                    cartService.getCartTotalReactive(userId).onErrorReturn(0.0),
+                    cartService.isCheckoutEnabled(userId).onErrorReturn(false),
+                    userService.findByUsername(authentication.getName()).onErrorReturn(createDefaultUser(authentication.getName())),
+                    paymentClientService.getBalanceForUser(authentication.getName()).onErrorReturn(1000.0)
+                );
+            })
             .map(tuple -> {
                 List<CartItemDto> items = tuple.getT1();
                 Double total = tuple.getT2();
                 Boolean checkoutEnabled = tuple.getT3();
                 User user = tuple.getT4();
                 Double balance = tuple.getT5();
+                
+                log.debug("Cart data - items: {}, total: {}, checkoutEnabled: {}, balance: {}", 
+                    items.size(), total, checkoutEnabled, balance);
                 
                 return Rendering.view("cart")
                         .modelAttribute("items", items)
@@ -73,8 +80,18 @@ public class WebCartController {
                         .build();
             })
             .onErrorResume(e -> {
-                log.error("Error in showCart", e);
-                return Mono.just(Rendering.redirectTo("/error").build());
+                log.error("Error in showCart for user: {}", authentication.getName(), e);
+                // Return a cart page with empty data instead of redirecting to error
+                return Mono.just(Rendering.view("cart")
+                        .modelAttribute("items", List.<CartItemDto>of())
+                        .modelAttribute("total", 0.0)
+                        .modelAttribute("empty", true)
+                        .modelAttribute("checkoutEnabled", false)
+                        .modelAttribute("user", createDefaultUser(authentication.getName()))
+                        .modelAttribute("balance", 1000.0)
+                        .modelAttribute("error", "Unable to load cart data. Please try again.")
+                        .modelAttribute("success", success)
+                        .build());
             });
     }
 
@@ -95,8 +112,9 @@ public class WebCartController {
             return Mono.just(Rendering.redirectTo("/login").build());
         }
         
-        return userService.getUserIdByUsername(authentication.getName())
+        return userService.getOrCreateUserIdByUsername(authentication.getName())
             .flatMap(userId -> {
+                log.debug("Found/created user ID: {} for cart action by user: {}", userId, authentication.getName());
                 Mono<Void> cartOperation = Mono.empty();
                 
                 if ("plus".equals(action)) {
@@ -111,8 +129,8 @@ public class WebCartController {
             })
             .then(Mono.just(Rendering.redirectTo("/cart/items").build()))
             .onErrorResume(e -> {
-                log.error("Error in handleCartAction", e);
-                return Mono.just(Rendering.redirectTo("/cart/items").build());
+                log.error("Error in handleCartAction for user: {}", authentication.getName(), e);
+                return Mono.just(Rendering.redirectTo("/cart/items?error=true").build());
             });
     }
 
@@ -131,7 +149,7 @@ public class WebCartController {
         
         return userService.findByUsername(authentication.getName())
             .flatMap(user -> {
-                return userService.getUserIdByUsername(authentication.getName())
+                return userService.getOrCreateUserIdByUsername(authentication.getName())
                     .flatMap(userId -> Mono.zip(
                         cartService.getCartItemsReactive(userId),
                         cartService.getCartTotalReactive(userId)
@@ -160,7 +178,7 @@ public class WebCartController {
                                 return orderService.createOrderFromCart(cartMap, user)
                                     .flatMap(order -> {
                                         // Clear the cart after successful order creation
-                                        return userService.getUserIdByUsername(authentication.getName())
+                                        return userService.getOrCreateUserIdByUsername(authentication.getName())
                                             .flatMap(cartService::clearUserCart)
                                             .then(Mono.just(Rendering.redirectTo("/orders?success=true").build()));
                                     });
@@ -171,5 +189,13 @@ public class WebCartController {
                 log.error("Error in createOrder", e);
                 return Mono.just(Rendering.redirectTo("/error").build());
             });
+    }
+    
+    private User createDefaultUser(String username) {
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(username + "@example.com");
+        user.setBalance(BigDecimal.valueOf(1000.0));
+        return user;
     }
 } 

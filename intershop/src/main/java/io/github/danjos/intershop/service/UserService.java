@@ -45,6 +45,21 @@ public class UserService {
             .map(User::getId);
     }
     
+    public Mono<Long> getOrCreateUserIdByUsername(String username) {
+        return userRepository.findByUsername(username)
+            .map(User::getId)
+            .switchIfEmpty(Mono.defer(() -> {
+                // Create a default user if not found
+                User newUser = new User();
+                newUser.setUsername(username);
+                newUser.setEmail(username + "@example.com");
+                newUser.setPassword(passwordEncoder.encode("defaultPassword"));
+                newUser.setBalance(java.math.BigDecimal.valueOf(1000.0));
+                return userRepository.save(newUser)
+                    .map(User::getId);
+            }));
+    }
+    
     public boolean matchesPassword(String rawPassword, String encodedPassword) {
         return passwordEncoder.matches(rawPassword, encodedPassword);
     }

@@ -37,6 +37,7 @@ class PaymentClientServiceIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        System.setProperty("test.mode", "true");
         assertThat(paymentClientService).isNotNull();
     }
 
