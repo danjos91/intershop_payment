@@ -7,6 +7,10 @@
 ![H2 Database](https://img.shields.io/badge/H2-blue?style=for-the-badge)
 ![OAuth2](https://img.shields.io/badge/OAuth2-4285F4?style=for-the-badge&logo=oauth&logoColor=white)
 
+## 📖 About
+
+Intershop is a modern, reactive e-commerce platform built with Spring WebFlux that provides a scalable solution for online shopping. The application features a complete product catalog, shopping cart functionality, order management, and user authentication through OAuth2 with Keycloak. Built on reactive programming principles, Intershop delivers high performance and efficient resource utilization, making it ideal for handling concurrent user requests and high-traffic scenarios.
+
 ## 📚 Technology Stack
 
 ### Backend (Reactive)
